@@ -1,36 +1,71 @@
-# Gomoku TUI
+# 技能五子棋终端版（Gomoku TUI）
 
-A terminal-based implementation of 五子棋 (Gomoku) featuring a 15×15 board, keyboard navigation, and three dramatic special skills. The project is currently through Phase 3, delivering core gameplay, TUI integration, and skill mechanics with cooldowns.
+一个 15×15 棋盘的终端版五子棋，支持键盘移动光标、即时渲染，以及四个戏剧化的技能。项目目前完成到 Phase 3，核心玩法、TUI 集成与技能冷却机制均已就绪。
 
-## Status
+## 项目状态
 
-- ✅ Phase 0: Repository scaffolding and tooling ready
-- ✅ Phase 1: Board domain logic & win detection complete
-- ✅ Phase 2: Turn engine, controller, renderer, and CLI implemented
-- ✅ Phase 3: Special skills, cooldown tracking, and testing in place
-- ⏳ Phases 4-5: Skill UI refinements, polish, documentation
+- ✅ Phase 0：仓库脚手架与基础工具配置
+- ✅ Phase 1：棋盘模型与胜负判定
+- ✅ Phase 2：回合引擎、控制器、渲染器与 CLI
+- ✅ Phase 3：技能、冷却机制与自动化测试
+- ⏳ Phase 4-5：技能 UI 打磨、文档扩充与更多可玩性
 
-## Controls
+## 环境要求
 
-- `W`, `A`, `S`, `D`: Move the cursor across the board
-- `Space`: Place the current player's stone
-- `1`: Use **飞沙走石** (randomly remove an opponent stone)
-- `2`: Use **静如止水** (skip the opponent's next turn)
-- `3`: Use **力拔山兮** (clear the entire board)
-- `4`: Use **擒擒拿拿** (relocate a highlighted opponent stone to a new empty cell)
-- `R`: Reset the match
-- `Q`: Quit the CLI session
+- Python 3.11 及以上版本
+- [uv](https://github.com/astral-sh/uv)（Python 包与任务管理器）
+- 操作系统：macOS、Linux 或其他支持 ANSI 终端的环境
 
-## Development Setup
+若尚未安装 `uv`，可执行：
+
+```bash
+pip install uv
+```
+
+## 安装步骤
+
+在项目根目录运行：
 
 ```bash
 uv sync
 ```
 
-## Running Tests
+该命令会创建（或复用）`.venv` 虚拟环境，并同步项目依赖与开发依赖。
+
+## 启动游戏
+
+使用 `uv` 直接运行 CLI：
 
 ```bash
-uv run pytest
+uv run python -m gomoku.cli
 ```
 
-Additional documentation will evolve alongside upcoming phases. For manual test scripts, see `docs/manual-testing.md` (to be expanded in Phase 5).
+启动后即可在终端中体验双人对战与技能系统。若首次运行提示键位捕获未实现，请确保终端支持原始模式或在支持 `readchar` 的环境中运行。
+
+## 操作说明
+
+- `W` / `A` / `S` / `D`：移动光标
+- `Space`：在光标处落子
+- `1`：施放 **飞沙走石**（随机移除对方棋子）
+- `2`：施放 **静如止水**（跳过对手下一回合）
+- `3`：施放 **力拔山兮**（清空棋盘）
+- `4`：施放 **擒擒拿拿**（搬运目标对手棋子）
+- `R`：重置对局
+- `Q`：退出游戏
+
+## 运行测试
+
+项目使用 `pytest` 作为测试框架，执行：
+
+```bash
+uv run pytest -q
+```
+
+`-q` 会以安静模式输出结果，可根据需要移除。
+
+## 更多信息
+
+- 手动测试脚本与未来扩展：`docs/manual-testing.md`
+- 项目后续计划、UI 调整与更多技能将在 Phase 4-5 持续更新。
+
+欢迎 issue / PR，或者直接 Fork 后自定义你的技能五子棋！
