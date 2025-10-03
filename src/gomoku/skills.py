@@ -51,10 +51,17 @@ class StoneStormSkill(Skill):
         if not opponent_coords:
             raise ValueError("对方棋盘上没有可移除的棋子")
 
-        target = rng.choice(opponent_coords)
+        cursor_target = None
+        if game.board.get(game.cursor) == player.opponent.stone:
+            cursor_target = game.cursor
+
+        target = cursor_target or rng.choice(opponent_coords)
         removed_stone = game.board.remove_stone(target)
         if game.last_move and game.last_move.coordinate == target:
             game.last_move = None
+
+        if cursor_target:
+            game.set_cursor(target)
 
         return SkillResult(
             skill_name=self.name,
@@ -134,7 +141,16 @@ class SeizeAndMoveSkill(Skill):
         if game.last_move and game.last_move.coordinate == source:
             game.last_move = None
 
-        game.board.place_stone(target, stone)
+        produced_win = game.board.place_stone(target, stone)
+        if produced_win:
+            winning_player = player.opponent
+            game.winner = winning_player
+            game.draw = False
+            game.last_move = None
+            victory_note = f"{game.player_label(winning_player)} 因棋子搬运达成五连珠"
+            game._log_action(victory_note)
+            game.push_status_message(victory_note)
+            game._comment_victory(winning_player)
 
         return SkillResult(
             skill_name=self.name,
