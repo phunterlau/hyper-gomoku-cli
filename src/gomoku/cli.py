@@ -68,6 +68,7 @@ def _map_key_to_command(key: str | None, controller: Controller) -> str | None:
         " ": Command.PLACE,
         "r": Command.RESET,
         "q": "quit",
+        "6": Command.SECRET_REPORT,
     }
     if key:
         for name, hotkey in SKILL_HOTKEYS.items():

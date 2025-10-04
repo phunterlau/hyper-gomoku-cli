@@ -16,6 +16,7 @@ class Command:
     PLACE = "place"
     RESET = "reset"
     SKILL_PREFIX = "skill:"
+    SECRET_REPORT = "secret-report"
 
 
 @dataclass
@@ -32,6 +33,7 @@ class Controller:
             Command.MOVE_RIGHT: lambda: self.game.move_cursor(0, 1),
             Command.PLACE: self.game.place_at_cursor,
             Command.RESET: self.game.reset,
+            Command.SECRET_REPORT: self.game.report_to_referee,
         }
         for skill_name in self.game.skill_registry:
             self._handlers[f"{Command.SKILL_PREFIX}{skill_name}"] = (

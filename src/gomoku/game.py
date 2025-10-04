@@ -36,6 +36,13 @@ def player_default_alias(player: Player) -> str:
     return PLAYER_DEFAULT_ALIASES.get(player, player.name.title())
 
 
+REFEREE_WIN_MESSAGE = "你向裁判举报了对手未按规则将提子丢入什刹海，直接获得胜利！"
+REFEREE_WIN_MESSAGE_LINES = (
+    "你向裁判举报了对手未按规则将提子丢入",
+    "什刹海，直接获得胜利！",
+)
+
+
 @dataclass
 class MoveResult:
     coordinate: Coordinate
@@ -81,6 +88,8 @@ class Game:
         default_factory=lambda: dict(PLAYER_DEFAULT_ALIASES)
     )
     skill_cooldowns: Dict[Player, Dict[str, int]] = field(init=False)
+    stone_storm_usage: Dict[Player, int] = field(init=False)
+    referee_win_player: Optional[Player] = None
 
     @classmethod
     def new(cls, *, rng: Optional[random.Random] = None) -> "Game":
@@ -96,6 +105,8 @@ class Game:
         }
         self._ensure_status_length()
         self.ensure_commentator()
+        self.stone_storm_usage = {player: 0 for player in Player}
+        self.referee_win_player = None
 
     # ------------------------------------------------------------------
     # Move application
@@ -157,6 +168,8 @@ class Game:
             )
 
         result = skill.apply(self, self.current_player, self.rng)
+        if skill.name == "飞沙走石":
+            self.stone_storm_usage[self.current_player] += 1
         self.skill_cooldowns[self.current_player][skill.name] = skill.cooldown_turns
         self.last_skill = result
         self.info_message = result.description
@@ -166,6 +179,36 @@ class Game:
         self._comment_skill(skill.name)
         if not self.is_finished:
             self._advance_after_action()
+        return result
+
+    def report_to_referee(self) -> SkillResult:
+        if self.is_finished:
+            raise ValueError("对局已经结束")
+
+        opponent = self.current_player.opponent
+        if self.stone_storm_usage.get(opponent, 0) == 0:
+            raise ValueError("裁判暂未受理举报，对手似乎还挺规矩的。")
+
+        message = REFEREE_WIN_MESSAGE
+        actor_label = self.player_label(self.current_player)
+
+        result = SkillResult(
+            skill_name="举报裁判",
+            player_name=self.current_player.name,
+            description=message,
+            details={},
+        )
+
+        self.winner = self.current_player
+        self.draw = False
+        self.referee_win_player = self.current_player
+        self.last_move = None
+        self.last_skill = result
+        self.info_message = message
+        self._log_action(f"{actor_label} 举报裁判：{message}")
+        self.push_status_message(message)
+        self._comment_skill(result.skill_name)
+        self._comment_victory(self.current_player)
         return result
 
     # ------------------------------------------------------------------
@@ -192,6 +235,8 @@ class Game:
 
     def status_message(self) -> str:
         if self.winner:
+            if self.referee_win_player is self.winner:
+                return REFEREE_WIN_MESSAGE
             return f"{self.player_label(self.winner)} 获胜！"
         if self.draw:
             return "平局"
@@ -246,11 +291,13 @@ class Game:
         for player in Player:
             for name, skill in self.skill_registry.items():
                 self.skill_cooldowns[player][name] = skill.initial_cooldown
+            self.stone_storm_usage[player] = 0
         self.action_log.clear()
         self._log_action("对局已重置")
         self.status_messages = self._default_status_messages()
         self.overlay_lines = None
         self.ensure_commentator()
+        self.referee_win_player = None
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -357,6 +404,11 @@ class Game:
         self.push_status_message(message)
 
     def _comment_victory(self, winner: Player) -> None:
+        if self.referee_win_player is winner:
+            self.show_overlay(REFEREE_WIN_MESSAGE_LINES)
+            self.push_status_message(REFEREE_WIN_MESSAGE_LINES[0])
+            return
+
         commentator = self.ensure_commentator()
         key = "victory_black" if winner is Player.BLACK else "victory_white"
         lines = commentator.comment_on_overlay(key)
